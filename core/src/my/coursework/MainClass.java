@@ -105,7 +105,7 @@ public class MainClass extends ApplicationAdapter {
 		Iterator<Rectangle> iter = raindrops.iterator();
 		while(iter.hasNext()){
 			Rectangle raindrop = iter.next();
-			raindrop.x -= 200 * Gdx.graphics.getDeltaTime();
+			raindrop.y -= 200 * Gdx.graphics.getDeltaTime();
 			if(raindrop.y + 64 < 0)
 				iter.remove();
 			if(raindrop.overlaps(bucket)){
@@ -114,7 +114,7 @@ public class MainClass extends ApplicationAdapter {
 			}
  		}
 	}
-	@Override
+
 	public void dispose(){
 		super.dispose();
 		dropImage.dispose();
