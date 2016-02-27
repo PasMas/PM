@@ -10,9 +10,14 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.tiled.renderers.OrthoCachedTiledMapRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.TimeUtils;
 
-import java.awt.Rectangle;
+import com.badlogic.gdx.math.Rectangle;
+import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 public class MainClass extends ApplicationAdapter {
 	OrthographicCamera camera;
@@ -23,7 +28,8 @@ public class MainClass extends ApplicationAdapter {
 	Music rainMusic;
 	Rectangle bucket;
 	Vector3 touchPos;
-
+	Array<Rectangle> raindrops;
+	long lastDropTime;
 
 	@Override
 	public void create () {
@@ -48,6 +54,19 @@ public class MainClass extends ApplicationAdapter {
 		bucket.y = 20;
 		bucket.width = 64;
 		bucket.height = 64;
+
+		raindrops = new Array<Rectangle>();
+		spawnRaindrop();
+	}
+
+	private void spawnRaindrop(){
+		Rectangle raindrop = new Rectangle();
+		raindrop.x = MathUtils.random(0, 800 - 64);
+		raindrop.y = 480;
+		raindrop.width = 64;
+		raindrop.height = 64;
+		raindrops.add(raindrop);
+		lastDropTime = TimeUtils.nanoTime();
 	}
 
 	@Override
@@ -59,6 +78,9 @@ public class MainClass extends ApplicationAdapter {
 		batch.setProjectionMatrix(camera.combined);
 		batch.begin();
 		batch.draw(bucketImage, bucket.x, bucket.y);
+		for(Rectangle raindrop: raindrops){
+			batch.draw(dropImage, raindrop.x, raindrop.y);
+		}
 		batch.end();
 
 		if(Gdx.input.isTouched()){
@@ -76,5 +98,29 @@ public class MainClass extends ApplicationAdapter {
 			bucket.x = 0;
 		if(bucket.x > 800 - 64)
 			bucket.x = 800 - 64;
+
+		if(TimeUtils.nanoTime() - lastDropTime > 1000000000)
+			spawnRaindrop();
+
+		Iterator<Rectangle> iter = raindrops.iterator();
+		while(iter.hasNext()){
+			Rectangle raindrop = iter.next();
+			raindrop.x -= 200 * Gdx.graphics.getDeltaTime();
+			if(raindrop.y + 64 < 0)
+				iter.remove();
+			if(raindrop.overlaps(bucket)){
+				dropSound.play();
+				iter.remove();
+			}
+ 		}
+	}
+	@Override
+	public void dispose(){
+		super.dispose();
+		dropImage.dispose();
+		bucketImage.dispose();
+		dropSound.dispose();
+		rainMusic.dispose();
+		batch.dispose();
 	}
 }
